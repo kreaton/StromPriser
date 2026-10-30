@@ -149,6 +149,9 @@
     /// <summary>Stack each component incl. VAT; otherwise ex. VAT.</summary>
     [Parameter] public bool IncludeVat { get; set; } = true;
 
+    /// <summary>Only hours starting before this get the cheapest/priciest marks; default means all.</summary>
+    [Parameter] public DateTime HighlightUntil { get; set; }
+
     private const double Step = 16;        // px per hour: 14px bar + 2px gap
     private const double Top = 30;         // room above the plot for callouts
     private const double PlotHeight = 320;
@@ -201,10 +204,13 @@
         _forecastStart = Rows.Select((r, i) => r.IsForecast ? i : -1).FirstOrDefault(i => i >= 0, -1);
 
         _callouts = [];
-        if (Rows.Count > 1)
+        var candidates = Enumerable.Range(0, Rows.Count)
+            .Where(i => HighlightUntil == default || Rows[i].Start < HighlightUntil)
+            .ToList();
+        if (candidates.Count > 1)
         {
-            var cheapest = IndexOfBy(r => r.Total.Total, min: true);
-            var priciest = IndexOfBy(r => r.Total.Total, min: false);
+            var cheapest = candidates.MinBy(i => Rows[i].Total.Total);
+            var priciest = candidates.MaxBy(i => Rows[i].Total.Total);
             _callouts.Add((cheapest, "▼ " + Rows[cheapest].Total.Total.ToString("0.00")));
             _callouts.Add((priciest, "▲ " + Rows[priciest].Total.Total.ToString("0.00")));
         }
@@ -236,15 +242,6 @@
             segments[topIndex] = segments[topIndex] with { IsTop = true };
 
         return new Bar(row, segments, Y(up));
-    }
-
-    private int IndexOfBy(Func<PriceRow, double> key, bool min)
-    {
-        var best = 0;
-        for (var i = 1; i < Rows.Count; i++)
-            if (min ? key(Rows[i]) < key(Rows[best]) : key(Rows[i]) > key(Rows[best]))
-                best = i;
-        return best;
     }
 
     private double Pick(Money m) => IncludeVat ? m.Total : m.ExVat;

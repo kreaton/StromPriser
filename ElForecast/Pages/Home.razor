@@ -47,27 +47,22 @@ else
         <div class="notice error" role="alert">Kunne ikke hente priserne: @_error</div>
     }
 
-    @if (_result is { Summary: { } s })
+    @if (_result is not null && _nearSummary is { } s)
     {
         <div class="tiles">
             <div class="tile">
-                <span class="tile-label">Billigste time</span>
+                <span class="tile-label">Billigste time · @NearLabel</span>
                 <span class="tile-value">@s.Cheapest.Total.Total.ToString("0.00") kr</span>
                 <span class="tile-sub">@When(s.Cheapest)</span>
             </div>
             <div class="tile">
-                <span class="tile-label">Dyreste time</span>
+                <span class="tile-label">Dyreste time · @NearLabel</span>
                 <span class="tile-value">@s.Priciest.Total.Total.ToString("0.00") kr</span>
                 <span class="tile-sub">@When(s.Priciest)</span>
             </div>
             <div class="tile">
-                <span class="tile-label">Gennemsnit</span>
-                <span class="tile-value">@s.AverageTotal.ToString("0.00") kr</span>
-                <span class="tile-sub">@_result.Rows.Count timer frem</span>
-            </div>
-            <div class="tile">
                 <span class="tile-label">Prognose</span>
-                <span class="tile-value">@_result.ForecastCount timer</span>
+                <span class="tile-value">@ForecastDays(_result.ForecastCount)</span>
                 <span class="tile-sub">
                     @if (_result.ForecastGeneratedAt is { } g)
                     {
@@ -87,7 +82,7 @@ else
         }
 
         <section class="card">
-            <PriceChart Rows="_result.Rows" IncludeVat="_setup.IncludeVat" />
+            <PriceChart Rows="_result.Rows" IncludeVat="_setup.IncludeVat" HighlightUntil="_nearUntil" />
         </section>
 
         <p class="muted small">
@@ -112,6 +107,13 @@ else
     private ForecastSetup? _setup;
     private string? _loadedFor;
     private PriceResult? _result;
+
+    // Cheapest and priciest are picked from today and the next two days only: further out the
+    // forecast is too uncertain to plan by.
+    private const int NearDays = 3;
+    private const string NearLabel = "3 dage";
+    private DateTime _nearUntil;
+    private PriceSummary? _nearSummary;
     private string? _supplierName;
     private string? _priceArea;
     private string? _error;
@@ -154,6 +156,8 @@ else
             };
             _result = await Prices.GetPricesAsync(query, ct);
             _priceArea = _result.PriceArea;
+            _nearUntil = DateTime.Today.AddDays(NearDays);
+            _nearSummary = PriceSummary.From(_result.Rows.Where(r => r.Start < _nearUntil).ToList());
 
             try
             {
@@ -180,6 +184,12 @@ else
     }
 
     private static string When(PriceRow row) => row.Start.ToString("ddd d. MMM 'kl.' HH':'mm") + (row.IsForecast ? " (prognose)" : "");
+
+    private static string ForecastDays(int hours)
+    {
+        var days = (int)Math.Round(hours / 24.0);
+        return days == 1 ? "1 dag" : $"{days} dage";
+    }
 
     public void Dispose() => _cts?.Cancel();
 }

@@ -40,12 +40,14 @@ the forecast opens straight away.
   date below it.
 - Bars to the right of the dashed **Prognose** line are forecasts and are drawn in lighter
   colours. Bars to the left are the official prices.
-- ▼ marks the cheapest hour and ▲ the most expensive one.
+- ▼ marks the cheapest hour and ▲ the most expensive one, picked from today and the next two
+  days. Further out the forecast is too uncertain to plan by.
 - Hover over a bar, or tap it on a phone, to see the exact price and what it is made of.
 - Scroll sideways to see more days. **Vis som tabel** shows the same numbers as a table.
 
-The boxes at the top show the cheapest and the most expensive hour, the average price, and
-when the forecast was last updated. Press **Opdater** for fresh numbers.
+The boxes at the top show the cheapest and the most expensive hour in the same three days,
+and how many days the forecast covers and when it was last updated. Press **Opdater** for
+fresh numbers.
 
 ## StromPriser: the Windows app
 
