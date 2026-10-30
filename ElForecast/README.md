@@ -64,7 +64,7 @@ taken from their site).
   *Prognose →* marks where published prices end. Forecast bars are drawn slightly lighter
   (`--forecast-opacity` in `app.css`).
 - The cheapest and most expensive hours are labelled with their total price. Like the tiles
-  above the chart, they only consider today and the next two days (`NearDays` in
+  below the chart, they only consider today and the next two days (`NearDays` in
   `Pages/Home.razor`, passed to the chart as `HighlightUntil`).
 - Hovering over a bar (or tapping it) shows its components, the total ex. VAT, the VAT and the
   total incl. VAT. Scrolling the chart hides the tooltip.

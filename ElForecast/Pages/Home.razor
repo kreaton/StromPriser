@@ -49,6 +49,15 @@ else
 
     @if (_result is not null && _nearSummary is { } s)
     {
+        @if (_result.ForecastError is { } fe)
+        {
+            <div class="notice warn" role="status">Prognosen kunne ikke hentes (@fe.Message) – kun offentliggjorte priser vises.</div>
+        }
+
+        <section class="card">
+            <PriceChart Rows="_result.Rows" IncludeVat="_setup.IncludeVat" HighlightUntil="_nearUntil" />
+        </section>
+
         <div class="tiles">
             <div class="tile">
                 <span class="tile-label">Billigste time · @NearLabel</span>
@@ -75,15 +84,6 @@ else
                 </span>
             </div>
         </div>
-
-        @if (_result.ForecastError is { } fe)
-        {
-            <div class="notice warn" role="status">Prognosen kunne ikke hentes (@fe.Message) – kun offentliggjorte priser vises.</div>
-        }
-
-        <section class="card">
-            <PriceChart Rows="_result.Rows" IncludeVat="_setup.IncludeVat" HighlightUntil="_nearUntil" />
-        </section>
 
         <p class="muted small">
             Priser i kr/kWh. Efter de offentliggjorte priser bygger prognosetimerne på
