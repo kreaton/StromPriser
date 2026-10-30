@@ -53,8 +53,11 @@ local builds. The copyright line comes from `<Copyright>` in the same file.
 - Horizontal gridlines every 0.50 kr. The price axis stays fixed while the bars scroll
   sideways when they do not fit the width.
 - A vertical line marks each midnight, and the date is written under it. A dashed line labelled
-  *Prognose →* marks where published prices end. Forecast bars are drawn lighter.
-- The cheapest and most expensive hours are labelled with their total price.
+  *Prognose →* marks where published prices end. Forecast bars are drawn slightly lighter
+  (`--forecast-opacity` in `app.css`).
+- The cheapest and most expensive hours are labelled with their total price. Like the tiles
+  above the chart, they only consider today and the next two days (`NearDays` in
+  `Pages/Home.razor`, passed to the chart as `HighlightUntil`).
 - Hovering over a bar (or tapping it) shows its components, the total ex. VAT, the VAT and the
   total incl. VAT. Scrolling the chart hides the tooltip.
 - *Vis som tabel* shows the same data as a table.

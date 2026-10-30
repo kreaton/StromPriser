@@ -13,6 +13,7 @@
     --accent-ink: #ffffff;
     --error-bg: #fde8e8;
     --warn-bg: #fff4d6;
+    --forecast-opacity: .75;   /* forecast bars: a little lighter than published prices */
     --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300;
 }
 @media (prefers-color-scheme: dark) {
@@ -127,7 +128,7 @@ main { flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 24px; }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; }
 .legend-unit { margin-left: auto; color: var(--muted); }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex: none; }
-.swatch.forecast { opacity: .5; }
+.swatch.forecast { opacity: var(--forecast-opacity); }
 .s1 { background: var(--s1); } .s2 { background: var(--s2); } .s3 { background: var(--s3); }
 .s4 { background: var(--s4); } .s5 { background: var(--s5); } .s6 { background: var(--s6); }
 
@@ -151,7 +152,7 @@ main { flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 24px; }
 .bar.hover::before { background: var(--border); }
 .seg { position: absolute; left: 1px; right: 1px; border-top: 1px solid var(--surface); }
 .seg.top { border-radius: 4px 4px 0 0; border-top: none; }
-.bar.forecast .seg { opacity: .5; }
+.bar.forecast .seg { opacity: var(--forecast-opacity); }
 .bar.hover .seg { opacity: 1; }
 
 .callout {
