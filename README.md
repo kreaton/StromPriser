@@ -13,6 +13,7 @@ All data comes from the public API at <https://stromligning.dk/api>. The UI is i
 |---|---|
 | [`Stromligning/`](Stromligning/README.md) | **Class library** (`net10.0`, no UI). API client, price/forecast logic, CSV/JSON export. Reusable elsewhere – see its README. |
 | `StromPriser/` | **WinForms app** (`net10.0-windows`). UI and saved settings only; everything else comes from the library. |
+| [`ElForecast/`](ElForecast/README.md) | **Blazor WebAssembly app** (`net10.0`). A week-ahead forecast as a stacked bar chart in the browser, built on the same library. |
 
 ## Running
 

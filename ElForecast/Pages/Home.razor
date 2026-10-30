@@ -1,0 +1,163 @@
+@page "/"
+@using ElForecast.Components
+@using ElForecast.Services
+@using Stromligning
+@implements IDisposable
+@inject PriceService Prices
+@inject CatalogService Catalog
+@inject SetupStore Store
+
+<PageTitle>ElForecast</PageTitle>
+
+@if (_setup is null)
+{
+    <p class="muted">Indlæser…</p>
+}
+else if (!_setup.IsComplete)
+{
+    <section class="empty">
+        <h1>Elprisprognose</h1>
+        <p>Se din forventede elpris time for time cirka en uge frem – spotprisprognosen lagt sammen
+           med dit netselskabs tariffer, afgifter og din elaftales tillæg.</p>
+        <a class="btn primary" href="opsaetning">Kom i gang – vælg dit netselskab</a>
+    </section>
+}
+else
+{
+    <div class="page-head">
+        <div>
+            <h1>Elprisprognose</h1>
+            <p class="muted">
+                @(_supplierName ?? _setup.SupplierId)@(_priceArea is null ? "" : $" · {_priceArea}")
+                · @(_setup.CompanyName ?? "kun spotpris uden tillæg")
+                · <a href="opsaetning">skift</a>
+            </p>
+        </div>
+        <button class="btn" @onclick="LoadAsync" disabled="@_loading">@(_loading ? "Henter…" : "Opdater")</button>
+    </div>
+
+    @if (_error is not null)
+    {
+        <div class="notice error" role="alert">Kunne ikke hente priserne: @_error</div>
+    }
+
+    @if (_result is { Summary: { } s })
+    {
+        <div class="tiles">
+            <div class="tile">
+                <span class="tile-label">Billigste time</span>
+                <span class="tile-value">@s.Cheapest.Total.Total.ToString("0.00") kr</span>
+                <span class="tile-sub">@When(s.Cheapest)</span>
+            </div>
+            <div class="tile">
+                <span class="tile-label">Dyreste time</span>
+                <span class="tile-value">@s.Priciest.Total.Total.ToString("0.00") kr</span>
+                <span class="tile-sub">@When(s.Priciest)</span>
+            </div>
+            <div class="tile">
+                <span class="tile-label">Gennemsnit</span>
+                <span class="tile-value">@s.AverageTotal.ToString("0.00") kr</span>
+                <span class="tile-sub">@_result.Rows.Count timer frem</span>
+            </div>
+            <div class="tile">
+                <span class="tile-label">Prognose</span>
+                <span class="tile-value">@_result.ForecastCount timer</span>
+                <span class="tile-sub">
+                    @if (_result.ForecastGeneratedAt is { } g)
+                    {
+                        @($"lavet {g.ToLocalTime():ddd d. MMM 'kl.' HH':'mm}")
+                    }
+                    else
+                    {
+                        @("ingen prognose")
+                    }
+                </span>
+            </div>
+        </div>
+
+        @if (_result.ForecastError is { } fe)
+        {
+            <div class="notice warn" role="status">Prognosen kunne ikke hentes (@fe.Message) – kun offentliggjorte priser vises.</div>
+        }
+
+        <section class="card">
+            <PriceChart Rows="_result.Rows" IncludeVat="_setup.IncludeVat" />
+        </section>
+
+        <p class="muted small">
+            Priser i kr/kWh. Efter de offentliggjorte priser bygger prognosetimerne på
+            stromligning.dk's spotprisprognose plus 25 % moms; tariffer, tillæg og elafgift er
+            kopieret fra seneste offentliggjorte time på samme klokkeslæt.
+        </p>
+    }
+    else if (_loading)
+    {
+        <p class="muted">Henter priser og prognose…</p>
+    }
+}
+
+@code {
+    private ForecastSetup? _setup;
+    private PriceResult? _result;
+    private string? _supplierName;
+    private string? _priceArea;
+    private string? _error;
+    private bool _loading;
+    private CancellationTokenSource? _cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _setup = await Store.LoadAsync();
+        if (_setup.IsComplete)
+            await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_setup is not { IsComplete: true })
+            return;
+
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var query = new PriceQuery(_setup.SupplierId!, _setup.CustomerGroupId, _setup.ProductId)
+            {
+                Hourly = true,
+                IncludeForecast = true
+            };
+            _result = await Prices.GetPricesAsync(query, ct);
+            _priceArea = _result.PriceArea;
+
+            try
+            {
+                _supplierName = (await Catalog.GetSuppliersAsync()).FirstOrDefault(s => s.Id == _setup.SupplierId)?.Name;
+            }
+            catch
+            {
+                // The name is only cosmetic; the id is shown instead.
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            if (!ct.IsCancellationRequested)
+                _loading = false;
+        }
+    }
+
+    private static string When(PriceRow row) => row.Start.ToString("ddd d. MMM 'kl.' HH':'mm") + (row.IsForecast ? " (prognose)" : "");
+
+    public void Dispose() => _cts?.Cancel();
+}
