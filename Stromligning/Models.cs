@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace StromPriser;
+namespace Stromligning;
 
 /// <summary>A price component split into its ex-VAT, VAT and total parts (kr/kWh).</summary>
 public readonly record struct Money(double ExVat, double Vat, double Total)
@@ -44,6 +44,10 @@ public sealed class Company
 {
     [JsonPropertyName("name")] public string Name { get; set; } = "";
     [JsonPropertyName("products")] public List<Product> Products { get; set; } = new();
+
+    /// <summary>The products priced from the spot price - the only ones /api/prices can price per hour.</summary>
+    [JsonIgnore]
+    public IEnumerable<Product> SpotProducts => Products.Where(p => !p.IsFixedPrice);
 
     public override string ToString() => Name;
 }

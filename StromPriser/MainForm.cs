@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net.Http;
+using Stromligning;
 
 namespace StromPriser;
 
@@ -7,9 +8,11 @@ public sealed class MainForm : Form
 {
     private static readonly CultureInfo Da = CultureInfo.GetCultureInfo("da-DK");
 
-    private readonly StromligningClient _client = new();
+    private readonly StromligningClient _client = new(userAgent: "StromPriser/1.0");
+    private readonly PriceService _service;
     private readonly AppSettings _settings = AppSettings.Load();
     private CancellationTokenSource? _inFlight;
+    private PriceResult? _lastResult;
 
     private readonly ComboBox _cmbSupplier = NewCombo();
     private readonly ComboBox _cmbCustomerGroup = NewCombo();
@@ -33,7 +36,13 @@ public sealed class MainForm : Form
         Text = "Hent priser",
         Width = 130,
         Height = 30,
-        Anchor = AnchorStyles.Right,
+        Enabled = false
+    };
+    private readonly Button _btnSave = new()
+    {
+        Text = "Gem som fil...",
+        Width = 120,
+        Height = 30,
         Enabled = false
     };
 
@@ -107,6 +116,7 @@ public sealed class MainForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 9F);
 
+        _service = new PriceService(_client);
         BuildLayout();
 
         _chkHourly.Checked = _settings.Hourly;
@@ -116,6 +126,7 @@ public sealed class MainForm : Form
         _cmbSupplier.SelectedIndexChanged += OnSupplierChanged;
         _cmbCompany.SelectedIndexChanged += OnCompanyChanged;
         _btnFetch.Click += async (_, _) => await LoadPricesAsync();
+        _btnSave.Click += async (_, _) => await SaveResultAsync();
         Load += async (_, _) => await LoadReferenceDataAsync();
         FormClosing += (_, _) => SaveSettings();
     }
@@ -163,7 +174,17 @@ public sealed class MainForm : Form
 
         table.Controls.Add(_chkHourly, 1, 2);
         table.Controls.Add(_chkForecast, 1, 3);
-        table.Controls.Add(_btnFetch, 3, 3);
+        // Right-to-left so "Hent priser" sits in the corner where it always was.
+        var buttons = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.RightToLeft,
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            WrapContents = false
+        };
+        buttons.Controls.Add(_btnFetch);
+        buttons.Controls.Add(_btnSave);
+        table.Controls.Add(buttons, 3, 3);
 
         var box = new GroupBox
         {
@@ -322,7 +343,7 @@ public sealed class MainForm : Form
             _cmbCompany.Items.Clear();
             _cmbCompany.Items.Add(NoCompany);
             foreach (var company in companiesTask.Result
-                         .Where(c => c.Products.Any(p => !p.IsFixedPrice))
+                         .Where(c => c.SpotProducts.Any())
                          .OrderBy(c => c.Name, StringComparer.Create(Da, true)))
             {
                 _cmbCompany.Items.Add(company);
@@ -410,7 +431,7 @@ public sealed class MainForm : Form
         if (_cmbCompany.SelectedItem is not Company company)
             return;
 
-        foreach (var product in company.Products.Where(p => !p.IsFixedPrice))
+        foreach (var product in company.SpotProducts)
             _cmbProduct.Items.Add(product);
 
         if (_cmbProduct.Items.Count > 0)
@@ -432,50 +453,23 @@ public sealed class MainForm : Form
         SetBusy(true, "Henter priser...");
         try
         {
-            // The coming 24 hours, measured from the top of the current hour so the
-            // interval we are in right now is included.
-            var now = DateTimeOffset.Now;
-            var from = new DateTimeOffset(now.Year, now.Month, now.Day, now.Hour, 0, 0, now.Offset);
-            // With the forecast on, ask for the whole forecast horizon: the API simply returns
-            // what has been published, and real prices should win over forecast ones.
-            var withForecast = _chkForecast.Checked;
-            var to = from.AddHours(withForecast ? 24 * 8 : 24);
-
-            var response = await _client.GetPricesAsync(
+            var query = new PriceQuery(
                 supplier.Id,
                 (_cmbCustomerGroup.SelectedItem as CustomerGroup)?.Id,
-                (_cmbProduct.SelectedItem as Product)?.Id,
-                from, to, token);
+                (_cmbProduct.SelectedItem as Product)?.Id)
+            {
+                Hourly = _chkHourly.Checked,
+                IncludeForecast = _chkForecast.Checked
+            };
 
+            var result = await _service.GetPricesAsync(query, token);
             if (token.IsCancellationRequested)
                 return;
 
-            var rows = response.Prices.Select(PriceRow.From).OrderBy(r => r.Start).ToList();
-            if (_chkHourly.Checked)
-                rows = PriceRow.ToHourly(rows);
-
-            string? forecastProblem = null;
-            var priceArea = response.PriceArea ?? supplier.PriceArea;
-            if (withForecast && !string.IsNullOrWhiteSpace(priceArea))
-            {
-                // A failed forecast should not cost the user the real prices already fetched.
-                try
-                {
-                    var forecast = await _client.GetForecastAsync(priceArea, token);
-                    if (token.IsCancellationRequested)
-                        return;
-
-                    rows.AddRange(PriceRow.FromForecast(rows, forecast.Prices));
-                }
-                catch (Exception ex) when (ex is HttpRequestException or StromligningApiException)
-                {
-                    forecastProblem = $"Prognosen kunne ikke hentes: {ex.Message}";
-                }
-            }
-
-            Render(rows, priceArea);
-            if (forecastProblem is not null)
-                _status.Text += "  " + forecastProblem;
+            _lastResult = result;
+            Render(result);
+            if (result.ForecastError is not null)
+                _status.Text += $"  Prognosen kunne ikke hentes: {result.ForecastError.Message}";
         }
         catch (OperationCanceledException)
         {
@@ -494,12 +488,13 @@ public sealed class MainForm : Form
 
     // ---------------- rendering ----------------
 
-    private void Render(List<PriceRow> rows, string? priceArea)
+    private void Render(PriceResult result)
     {
         _gridRows.Rows.Clear();
         _gridBreakdown.Rows.Clear();
 
-        if (rows.Count == 0)
+        var rows = result.Rows;
+        if (result.Summary is not { } summary)
         {
             _lblHeadline.Text = "Ingen priser tilgængelige for det valgte selskab.";
             _lblPrice.Text = "-";
@@ -510,10 +505,9 @@ public sealed class MainForm : Form
             return;
         }
 
-        var cheapest = rows.MinBy(r => r.Total.Total)!;
-        var priciest = rows.MaxBy(r => r.Total.Total)!;
-        var average = rows.Average(r => r.Total.Total);
-        var forecastCount = rows.Count(r => r.IsForecast);
+        var cheapest = summary.Cheapest;
+        var priciest = summary.Priciest;
+        var forecastCount = result.ForecastCount;
 
         _lblHeadline.Text = forecastCount > 0
             ? $"Laveste pris frem til {rows[^1].End.ToString(@"ddd dd'/'MM HH':'mm", Da)} (inkl. prognose)"
@@ -523,10 +517,10 @@ public sealed class MainForm : Form
         _lblRowsCaption.Text = RowsCaption(forecastCount > 0);
         _lblContext.Text =
             $"Dyreste: {priciest.Total.Total.ToString("N4", Da)} kr/kWh ({FormatRange(priciest)})" +
-            $"     Gennemsnit: {average.ToString("N4", Da)} kr/kWh";
+            $"     Gennemsnit: {summary.AverageTotal.ToString("N4", Da)} kr/kWh";
         _lblSavings.Text =
-            $"Du sparer {(priciest.Total.Total - cheapest.Total.Total).ToString("N4", Da)} kr/kWh " +
-            $"({(1 - cheapest.Total.Total / priciest.Total.Total).ToString("P0", Da)}) ved at bruge " +
+            $"Du sparer {summary.Saving.ToString("N4", Da)} kr/kWh " +
+            $"({summary.SavingFraction.ToString("P0", Da)}) ved at bruge " +
             $"strømmen i den billigste periode frem for den dyreste.";
 
         FillBreakdown(cheapest);
@@ -564,7 +558,7 @@ public sealed class MainForm : Form
         }
 
         var forecastText = forecastCount > 0 ? $" ({forecastCount} fra prognose)" : "";
-        _status.Text = $"{rows.Count} perioder{forecastText} i prisområde {priceArea ?? "?"} - " +
+        _status.Text = $"{rows.Count} perioder{forecastText} i prisområde {result.PriceArea ?? "?"} - " +
                        $"opdateret {DateTime.Now.ToString("HH:mm:ss", Da)}.";
     }
 
@@ -600,12 +594,47 @@ public sealed class MainForm : Form
     private static string FormatRange(PriceRow row) =>
         $"{row.Start.ToString(@"ddd dd'/'MM HH':'mm", Da)}–{row.End.ToString(@"HH':'mm", Da)}";
 
+    // ---------------- export ----------------
+
+    private async Task SaveResultAsync()
+    {
+        if (_lastResult is not { } result)
+            return;
+
+        using var dialog = new SaveFileDialog
+        {
+            Title = "Gem priser",
+            Filter = "CSV-fil (*.csv)|*.csv|JSON-fil (*.json)|*.json",
+            FileName = $"strompriser-{result.From.ToString("yyyy-MM-dd-HHmm", CultureInfo.InvariantCulture)}",
+            InitialDirectory = _settings.ExportFolder ?? "",
+            OverwritePrompt = true
+        };
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+            return;
+
+        // The dialog's filter decides the format, so a name typed without an extension
+        // still gets the one the user picked.
+        var format = dialog.FilterIndex == 2 ? ExportFormat.Json : ExportFormat.Csv;
+        try
+        {
+            // da-DK so the CSV opens straight into columns in a Danish Excel.
+            await PriceExporter.SaveAsync(result, dialog.FileName, format, Da);
+            _settings.ExportFolder = Path.GetDirectoryName(dialog.FileName);
+            _status.Text = $"Gemt: {dialog.FileName}";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowError("Kunne ikke gemme filen.", ex);
+        }
+    }
+
     // ---------------- helpers ----------------
 
     private void SetBusy(bool busy, string? message)
     {
         UseWaitCursor = busy;
         _btnFetch.Enabled = !busy && _cmbSupplier.SelectedItem is Supplier;
+        _btnSave.Enabled = !busy && _lastResult is { Rows.Count: > 0 };
         _cmbSupplier.Enabled = !busy;
         _cmbCustomerGroup.Enabled = !busy;
         _cmbCompany.Enabled = !busy;

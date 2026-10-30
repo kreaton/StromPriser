@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace StromPriser;
+namespace Stromligning;
 
 /// <summary>
 /// A single priced interval, flattened from the API's nested shape into the components
@@ -24,7 +24,8 @@ public sealed class PriceRow
 
     public DateTime End => Start + Duration;
 
-    private const double VatRate = 0.25;
+    /// <summary>Danish VAT (moms), applied to the forecast spot price.</summary>
+    public const double VatRate = 0.25;
 
     public static PriceRow From(PricePoint point)
     {

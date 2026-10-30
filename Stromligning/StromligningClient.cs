@@ -1,31 +1,49 @@
 using System.Globalization;
-using System.Net.Http;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace StromPriser;
+namespace Stromligning;
 
-/// <summary>Raised when the API answers with a non-success status; carries the server's message.</summary>
+/// <summary>Raised when the API answers with a non-success status (or an empty body); carries the server's message.</summary>
 public sealed class StromligningApiException : Exception
 {
-    public StromligningApiException(string message) : base(message) { }
+    public StromligningApiException(string message, HttpStatusCode? statusCode = null) : base(message)
+    {
+        StatusCode = statusCode;
+    }
+
+    /// <summary>The HTTP status, or null when the request itself succeeded but the body was empty.</summary>
+    public HttpStatusCode? StatusCode { get; }
 }
 
 /// <summary>Thin client over the public https://stromligning.dk/api endpoints.</summary>
 public sealed class StromligningClient : IDisposable
 {
     private const string BaseUrl = "https://stromligning.dk/api";
+    public const string DefaultUserAgent = "Stromligning/1.0";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
     };
 
-    private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(30) };
+    private readonly HttpClient _http;
+    private readonly bool _ownsHttp;
+    private readonly ProductInfoHeaderValue _userAgent;
 
-    public StromligningClient()
+    /// <summary>
+    /// Creates a client. Pass an <see cref="HttpClient"/> to share one (for example from
+    /// IHttpClientFactory) - it is then left untouched and not disposed; otherwise the client
+    /// creates and owns its own with a 30 second timeout.
+    /// </summary>
+    /// <param name="http">Optional shared HttpClient.</param>
+    /// <param name="userAgent">Sent as User-Agent, in "product/version" form.</param>
+    public StromligningClient(HttpClient? http = null, string userAgent = DefaultUserAgent)
     {
-        _http.DefaultRequestHeaders.UserAgent.ParseAdd("StromPriser/1.0");
-        _http.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        _ownsHttp = http is null;
+        _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        _userAgent = ProductInfoHeaderValue.Parse(userAgent);
     }
 
     /// <summary>Grid companies (netselskaber). The chosen one determines the distribution tariff.</summary>
@@ -79,22 +97,29 @@ public sealed class StromligningClient : IDisposable
 
     private async Task<T> GetAsync<T>(string url, CancellationToken ct)
     {
-        using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+        // Headers go on the request rather than DefaultRequestHeaders, so a shared HttpClient
+        // is not modified.
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.UserAgent.Add(_userAgent);
+        request.Headers.Accept.ParseAdd("application/json");
+
+        using var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
         if (!response.IsSuccessStatusCode)
             throw new StromligningApiException(
-                $"{(int)response.StatusCode} {response.ReasonPhrase}: {ExtractError(body)}");
+                $"{(int)response.StatusCode} {response.ReasonPhrase}: {ExtractError(body)}",
+                response.StatusCode);
 
         var result = JsonSerializer.Deserialize<T>(body, JsonOptions);
-        return result ?? throw new StromligningApiException("Tomt svar fra API'et.");
+        return result ?? throw new StromligningApiException("Empty response from the API.");
     }
 
     /// <summary>Pulls the "error" field out of an error body, falling back to the raw text.</summary>
     private static string ExtractError(string body)
     {
         if (string.IsNullOrWhiteSpace(body))
-            return "(intet svar)";
+            return "(empty response)";
 
         try
         {
@@ -114,5 +139,9 @@ public sealed class StromligningClient : IDisposable
         return body.Length > 300 ? body[..300] + "..." : body;
     }
 
-    public void Dispose() => _http.Dispose();
+    public void Dispose()
+    {
+        if (_ownsHttp)
+            _http.Dispose();
+    }
 }
