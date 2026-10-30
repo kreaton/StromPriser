@@ -45,7 +45,7 @@ the forecast opens straight away.
 - Hover over a bar, or tap it on a phone, to see the exact price and what it is made of.
 - Scroll sideways to see more days. **Vis som tabel** shows the same numbers as a table.
 
-The boxes at the top show the cheapest and the most expensive hour in the same three days,
+The boxes below the chart show the cheapest and the most expensive hour in the same three days,
 and how many days the forecast covers and when it was last updated. Press **Opdater** for
 fresh numbers.
 
