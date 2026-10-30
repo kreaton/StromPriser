@@ -76,11 +76,15 @@ h1 { font-size: 1.6rem; margin: 0 0 .25rem; line-height: 1.2; }
 main { flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 24px; }
 
 .footer {
-    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px;
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px;
     padding: 14px 24px; border-top: 1px solid var(--border); background: var(--surface);
     color: var(--muted); font-size: .85rem;
 }
 .footer a { color: inherit; }
+.data-source { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.data-source img { height: 16px; width: auto; display: block; }
+.data-source:hover span { text-decoration: underline; }
+.credits { font-size: .75rem; opacity: .85; }
 
 /* ---------- controls ---------- */
 .btn {

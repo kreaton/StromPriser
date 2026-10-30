@@ -41,9 +41,17 @@ The output is plain static files, so it can be hosted anywhere:
 
 ## Version
 
-The footer shows `Major.Minor.Build`. `MajorMinor` is set by hand in `ElForecast.csproj`. The
-build number is the GitHub Actions run number, passed as `-p:BuildNumber=…`, and is `0` for
-local builds. The copyright line comes from `<Copyright>` in the same file.
+The versioning follows CheckYourDanish. The footer ends with
+`v1.0.42 · 30.10.2026 11:29 · f9a115c`: version, build time (Danish time) and git commit.
+
+- `MajorMinor` is set by hand in `ElForecast.csproj`.
+- The last number is the GitHub Actions run number, passed as `-p:BuildNumber=…`. It is `0`
+  for local builds.
+- The SDK adds the commit to the informational version, and the build time is stamped as an
+  `AssemblyMetadata("BuildDate")` attribute. `BuildInfo.cs` reads both.
+
+The footer also links to stromligning.dk with their logo (`wwwroot/img/stromligning-logo.svg`,
+taken from their site).
 
 ## The chart
 
@@ -81,7 +89,7 @@ from the setup with a different grid company, customer group or product.
 | File | Responsibility |
 |---|---|
 | `Program.cs` | Sets the da-DK culture and registers the library's client and `PriceService`. |
-| `AppInfo.cs` | Version and copyright from the assembly, shown in the footer. |
+| `BuildInfo.cs` | Version, build time and commit for the footer, and the User-Agent sent to the API. |
 | `Services/ForecastSetup.cs` | The saved selections. |
 | `Services/SetupStore.cs` | Reads and writes them in `localStorage` through `wwwroot/js/elforecast.js`. |
 | `Services/CatalogService.cs` | Fetches the grid and trading companies once per visit, sorted the Danish way. |
