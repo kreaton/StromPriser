@@ -1,0 +1,148 @@
+@page "/opsaetning"
+@using ElForecast.Services
+@using Stromligning
+@inject CatalogService Catalog
+@inject SetupStore Store
+@inject NavigationManager Nav
+
+<PageTitle>Opsætning · ElForecast</PageTitle>
+
+<h1>Opsætning</h1>
+<p class="lead">Vælg dit netselskab og din elaftale. Valgene gemmes i denne browser.</p>
+
+@if (_error is not null)
+{
+    <div class="notice error" role="alert">
+        Kunne ikke hente selskaberne: @_error
+        <button class="btn" @onclick="LoadAsync">Prøv igen</button>
+    </div>
+}
+else if (_suppliers is null || _companies is null)
+{
+    <p class="muted">Henter selskaber…</p>
+}
+else
+{
+    <form class="setup" @onsubmit="SaveAsync" @onsubmit:preventDefault>
+        <label>
+            <span>Netselskab</span>
+            <select value="@_setup.SupplierId" @onchange="OnSupplierChanged" required>
+                <option value="">— vælg netselskab —</option>
+                @foreach (var s in _suppliers)
+                {
+                    <option value="@s.Id">@s</option>
+                }
+            </select>
+            <small>Bestemmer distributionstariffen og prisområdet (DK1/DK2).</small>
+        </label>
+
+        <label>
+            <span>Kundegruppe</span>
+            <select @bind="_setup.CustomerGroupId" disabled="@(SelectedSupplier is null)">
+                @foreach (var g in SelectedSupplier?.CustomerGroups ?? [])
+                {
+                    <option value="@g.Id">@g</option>
+                }
+            </select>
+        </label>
+
+        <label>
+            <span>Elhandelsselskab</span>
+            <select value="@(_setup.CompanyName ?? "")" @onchange="OnCompanyChanged">
+                <option value="">(intet – kun spotpris uden tillæg)</option>
+                @foreach (var c in _companies)
+                {
+                    <option value="@c.Name">@c.Name</option>
+                }
+            </select>
+            <small>Bestemmer tillægget. Fastprisprodukter er udeladt.</small>
+        </label>
+
+        <label>
+            <span>Produkt</span>
+            <select @bind="_setup.ProductId" disabled="@(SelectedCompany is null)">
+                @foreach (var p in SelectedCompany?.SpotProducts ?? [])
+                {
+                    <option value="@p.Id">@p.Name</option>
+                }
+            </select>
+        </label>
+
+        <label class="check">
+            <input type="checkbox" @bind="_setup.IncludeVat" />
+            <span>Vis priser inkl. moms</span>
+        </label>
+
+        <div class="actions">
+            <button type="submit" class="btn primary" disabled="@(!_setup.IsComplete)">Gem og vis prognose</button>
+            @if (_saved)
+            {
+                <span class="muted">Gemt.</span>
+            }
+        </div>
+    </form>
+}
+
+@code {
+    private IReadOnlyList<Supplier>? _suppliers;
+    private IReadOnlyList<Company>? _companies;
+    private ForecastSetup _setup = new();
+    private string? _error;
+    private bool _saved;
+
+    private Supplier? SelectedSupplier => _suppliers?.FirstOrDefault(s => s.Id == _setup.SupplierId);
+    private Company? SelectedCompany => _companies?.FirstOrDefault(c => c.Name == _setup.CompanyName);
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _error = null;
+        try
+        {
+            _setup = await Store.LoadAsync();
+            var suppliers = Catalog.GetSuppliersAsync();
+            var companies = Catalog.GetCompaniesAsync();
+            _suppliers = await suppliers;
+            _companies = await companies;
+
+            // Drop saved values that no longer exist, falling back to the defaults.
+            if (SelectedSupplier is null)
+                _setup.SupplierId = null;
+            if (SelectedSupplier?.CustomerGroups.All(g => g.Id != _setup.CustomerGroupId) ?? true)
+                _setup.CustomerGroupId = DefaultGroup(SelectedSupplier);
+            if (SelectedCompany is null)
+                _setup.CompanyName = null;
+            if (SelectedCompany?.SpotProducts.All(p => p.Id != _setup.ProductId) ?? true)
+                _setup.ProductId = SelectedCompany?.SpotProducts.FirstOrDefault()?.Id;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private void OnSupplierChanged(ChangeEventArgs e)
+    {
+        _setup.SupplierId = string.IsNullOrEmpty(e.Value as string) ? null : (string)e.Value!;
+        _setup.CustomerGroupId = DefaultGroup(SelectedSupplier);
+        _saved = false;
+    }
+
+    private void OnCompanyChanged(ChangeEventArgs e)
+    {
+        _setup.CompanyName = string.IsNullOrEmpty(e.Value as string) ? null : (string)e.Value!;
+        _setup.ProductId = SelectedCompany?.SpotProducts.FirstOrDefault()?.Id;
+        _saved = false;
+    }
+
+    private static string? DefaultGroup(Supplier? supplier) =>
+        supplier is null ? null : (supplier.CustomerGroups.FirstOrDefault(g => g.Default) ?? supplier.CustomerGroups.FirstOrDefault())?.Id;
+
+    private async Task SaveAsync()
+    {
+        await Store.SaveAsync(_setup);
+        _saved = true;
+        Nav.NavigateTo("");
+    }
+}
