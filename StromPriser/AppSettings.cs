@@ -17,6 +17,7 @@ public sealed class AppSettings
     public string? ProductId { get; set; }
     public bool Hourly { get; set; } = true;
     public bool IncludeForecast { get; set; }
+    public string? ExportFolder { get; set; }
 
     public static AppSettings Load()
     {
