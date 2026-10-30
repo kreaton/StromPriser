@@ -6,8 +6,9 @@ electricity tax, VAT), to extend them about a week ahead with a spot price forec
 save the result as CSV or JSON.
 
 It has no UI or Windows dependencies (plain `net10.0`), so it works from a console tool, a
-web API, a background service or a desktop app. The StromPriser WinForms app in this
-repository is one consumer.
+web API, a background service, a desktop app or the browser (Blazor WebAssembly). The
+[StromPriser](../StromPriser/README.md) WinForms app and the [ElForecast](../ElForecast/README.md) Blazor app
+in this repository both use it.
 
 ## Quick start
 
@@ -35,7 +36,7 @@ Reference it from another project in the same repository:
 ```
 
 To use it from another repository, run `dotnet pack` and publish the package to a NuGet feed
-(a local folder or GitLab's package registry). The project already has package metadata and
+(a local folder or GitHub Packages). The project already has package metadata and
 includes this README in the package.
 
 ## Overview

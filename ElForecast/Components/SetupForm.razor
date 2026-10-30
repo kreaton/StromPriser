@@ -1,4 +1,3 @@
-@page "/opsaetning"
 @using ElForecast.Services
 @using Stromligning
 @inject CatalogService Catalog
@@ -143,6 +142,6 @@ else
     {
         await Store.SaveAsync(_setup);
         _saved = true;
-        Nav.NavigateTo("");
+        Nav.NavigateTo(Nav.BaseUri);
     }
 }

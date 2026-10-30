@@ -1,107 +1,107 @@
-# StromPriser
+# StromPriser – know when electricity is cheap
 
-A small Windows Forms app (.NET 10) that shows Danish household electricity prices for the
-coming 24 hours, broken down into every component of the bill, and points out the cheapest
-period. Optionally it extends the view about a week ahead using a spot price forecast, and it
-can save what it shows as CSV or JSON.
+See what electricity really costs your household, hour by hour, and plan the washing machine,
+the dishwasher or the car charging for the cheap hours. Prices include everything on the bill,
+not just the spot price, and they reach about a week ahead.
 
-All data comes from the public API at <https://stromligning.dk/api>. The UI is in Danish.
+![ElForecast showing a week of hourly prices as stacked bars, with details for one forecast hour](docs/elforecast.jpg)
 
-## Repository layout
+All prices come from the free public service at [stromligning.dk](https://stromligning.dk).
+The apps themselves are in Danish.
 
-| Folder | Project |
+## Two ways to use it
+
+| | **ElForecast** – in the browser | **StromPriser** – on Windows |
+|---|---|---|
+| Best for | A quick look at the week ahead, on your phone or computer | Detailed numbers, and saving them to Excel |
+| Shows | A bar chart of every hour for about 8 days | Tables of every period, with the cheapest one highlighted |
+| Install | Nothing, just open the page. It can also be added to your home screen. | A small Windows program |
+
+## ElForecast: the week ahead in the browser
+
+**First time:** choose **Opsætning** and pick:
+
+1. **Netselskab**: the company that owns the cables to your home. It is printed on your
+   electricity bill.
+2. **Kundegruppe**: normally the preselected private customer group.
+3. **Elhandelsselskab** and **Produkt**: who you buy your electricity from. Pick *(intet)* to
+   see the plain market price without any company's surcharge.
+4. **Vis priser inkl. moms**: tick it to see what you actually pay, including VAT.
+
+Press **Gem og vis prognose**. Your choices are remembered in this browser, so next time
+the forecast opens straight away.
+
+**Reading the chart**
+
+- Each bar is one hour. The taller the bar, the more that hour costs.
+- The colours show what the price is made of. Blue at the bottom is the market price, which
+  changes from hour to hour. The layers on top are the fixed parts of the bill (see below).
+- The lines across the chart are 0.50 kr apart. A vertical line marks each midnight, with the
+  date below it.
+- Bars to the right of the dashed **Prognose** line are forecasts and are drawn in lighter
+  colours. Bars to the left are the official prices.
+- ▼ marks the cheapest hour and ▲ the most expensive one.
+- Hover over a bar, or tap it on a phone, to see the exact price and what it is made of.
+- Scroll sideways to see more days. **Vis som tabel** shows the same numbers as a table.
+
+The boxes at the top show the cheapest and the most expensive hour, the average price, and
+when the forecast was last updated. Press **Opdater** for fresh numbers.
+
+## StromPriser: the Windows app
+
+Pick your companies in the four drop-downs, just like in ElForecast, and press
+**Hent priser**. You get:
+
+- a summary with the cheapest and the most expensive period and how much you save by moving
+  your consumption,
+- what the cheapest period's price is made of,
+- a table of every period for the next 24 hours, with the cheapest row in green and the most
+  expensive in red.
+
+Tick **Medtag prognose** to see about a week ahead, and **Vis pr. time** for one row per hour
+instead of every quarter of an hour. **Gem som fil...** saves what you see as a CSV file that
+opens directly in a Danish Excel, or as JSON. Your choices are remembered between runs.
+
+## What makes up the price?
+
+| Part | What it is |
 |---|---|
-| [`Stromligning/`](Stromligning/README.md) | **Class library** (`net10.0`, no UI). API client, price/forecast logic, CSV/JSON export. Reusable elsewhere – see its README. |
-| `StromPriser/` | **WinForms app** (`net10.0-windows`). UI and saved settings only; everything else comes from the library. |
-| [`ElForecast/`](ElForecast/README.md) | **Blazor WebAssembly app** (`net10.0`). A week-ahead forecast as a stacked bar chart in the browser, built on the same library. |
+| **Spotpris** | The market price of the electricity itself. It changes every hour (every 15 minutes, in fact). |
+| **Tillæg** | Your electricity company's surcharge on top of the market price. |
+| **Nettarif** and **Systemtarif** | Energinet's charges for the national grid. |
+| **Distribution** | Your local grid company's charge. It is usually highest in the late afternoon and early evening. |
+| **Elafgift** | The state electricity tax. |
+| **Moms** | 25 % VAT on all of the above. |
 
-## Running
+## How good is the forecast?
+
+The official prices for tomorrow are published around 13:00 every day. Everything after that
+is a forecast, and it is only an estimate:
+
+- The **market price** comes from the forecast at stromligning.dk. It is often close, but
+  wind, weather and demand can change it a lot from one day to the next.
+- The **other parts** are copied from the most recent official price at the same time of day.
+  Changes between weekdays and weekends, or seasonal tariff changes, are not taken into
+  account.
+
+Use the forecast to spot the cheap days and hours ahead. Check the official prices before
+relying on a single hour.
+
+## For developers
+
+The repository holds three .NET 10 projects. Each has its own README with the technical details:
+
+| Project | |
+|---|---|
+| [Stromligning](Stromligning/README.md) | Class library for the stromligning.dk API: prices with the full breakdown, the forecast, CSV/JSON export. Has no UI, so it can be reused anywhere. |
+| [ElForecast](ElForecast/README.md) | The Blazor WebAssembly app. It is deployed by FTP from GitHub Actions on every push to `main`. |
+| [StromPriser](StromPriser/README.md) | The Windows Forms app. |
 
 ```bash
-dotnet run --project StromPriser/StromPriser.csproj
+dotnet run --project ElForecast     # http://localhost:5276
+dotnet run --project StromPriser    # Windows only
 ```
 
-Requires the .NET 10 SDK on Windows. Open `StromPriser.slnx` in Visual Studio for both projects.
+## License
 
-## Using the app
-
-The selection box at the top has four drop-downs and two options:
-
-| Control | Meaning |
-|---|---|
-| **Netselskab** | Grid company. Determines the distribution tariff and the price area (DK1/DK2). Required. |
-| **Kundegruppe** | Customer group within the grid company (e.g. *C - Privatkunder*). Defaults to the company's default group. |
-| **Elhandelsselskab** | Trading company. Determines the surcharge (*tillæg*). "(intet …)" means raw spot price with no surcharge. Only companies with at least one non-fixed-price product are listed. |
-| **Produkt** | The trading company's product. Fixed-price products are hidden. |
-| **Vis pr. time** | Average 15-minute prices into one row per clock hour. |
-| **Medtag prognose** | Append forecast-based estimates for roughly 7 days ahead (see below). |
-
-Press **Hent priser** to fetch. The result shows:
-
-- **Summary panel** – the lowest total price (incl. VAT) and when it occurs, the most expensive
-  period, the average, and how much is saved by using the cheapest period instead of the
-  priciest one.
-- **Breakdown grid** – the cheapest period split into spot price, surcharge, net tariff,
-  system tariff, distribution and electricity tax, each ex. VAT, VAT and incl. VAT.
-- **Rows grid** – every period in the window. Components are ex. VAT, the *Total* column is
-  incl. VAT. The cheapest row is green and bold, the most expensive red.
-
-Before roughly 13:00, tomorrow's prices are not published yet, so without the forecast the
-list ends at midnight.
-
-## Forecast
-
-With **Medtag prognose** ticked, the hours after the last published price are filled with
-estimates: the forecast spot price plus 25 % VAT, with every tariff, the surcharge and the
-electricity tax copied from the latest published price at the same hour of day. Published
-prices always win.
-
-Forecast rows are shown in grey italics, the headline changes to *"Laveste pris frem til …
-(inkl. prognose)"*, and the status bar reports how many rows are forecast. If the forecast
-request fails, the published prices are still shown and the error is appended to the status
-bar. The estimates ignore weekday/weekend and seasonal tariff differences – details in the
-[library README](Stromligning/README.md#how-forecast-rows-are-estimated).
-
-## Saving to a file
-
-**Gem som fil...** (enabled once prices are shown) saves exactly what is on screen, forecast
-rows included:
-
-- **CSV** – one line per period, written with `;` and decimal commas (da-DK) so it opens
-  straight into columns in a Danish Excel.
-- **JSON** – the rows with every component ex. VAT / VAT / total, plus the selection, the
-  window, the summary and when the forecast was generated.
-
-The format follows the file type picked in the dialog. Both formats are described in the
-[library README](Stromligning/README.md#priceexporter).
-
-## Saved settings
-
-The four selections, both check boxes and the last export folder are stored in
-`%APPDATA%\StromPriser\settings.json` when **Hent priser** is pressed and when the window
-closes, and restored once the company lists have loaded at startup.
-
-- Trading companies have no id in the API, so they are remembered by **name**.
-- A missing or corrupt file just means starting from defaults; write failures are ignored.
-- Closing the window before the lists have loaded keeps the previous selections instead of
-  wiping them.
-
-## App source files
-
-All in `StromPriser/`; for the library's files see [its README](Stromligning/README.md#source-files).
-
-| File | Responsibility |
-|---|---|
-| `Program.cs` | Entry point; starts `MainForm`. |
-| `MainForm.cs` | All UI: layout, loading the company lists, building a `PriceQuery`, rendering the `PriceResult`, saving to file, saving/restoring selections. |
-| `AppSettings.cs` | Loading and saving the user's last selections. |
-
-## Implementation notes
-
-- **Cancellation** – pressing *Hent priser* again cancels the request in flight.
-- **Formatting** – numbers use `da-DK`; date format strings escape `/` and `:` because in
-  `da-DK` they would otherwise render as `-` and `.`.
-- **Layout** – docked controls are added in reverse order (WinForms docks the last-added
-  first), and docked labels have `AutoSize = false` so their heights are respected.
-- **User-Agent** – the app identifies itself as `StromPriser/1.0` via the library's
-  `userAgent` parameter.
+[MIT](LICENSE) © 2026 Per Hejndorf. Price data from [stromligning.dk](https://stromligning.dk).

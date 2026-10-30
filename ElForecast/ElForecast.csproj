@@ -6,7 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
 
-    <Version>1.0.0</Version>
+    <!-- Major.Minor by hand; the patch is the GitHub Actions run number (-p:BuildNumber=...), 0 locally. -->
+    <MajorMinor>1.0</MajorMinor>
+    <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
+    <Version>$(MajorMinor).$(BuildNumber)</Version>
     <Authors>Per Hejndorf</Authors>
     <Copyright>© 2026 Per Hejndorf</Copyright>
     <!-- Keep the footer's version clean: no "+<commit hash>" suffix. -->

@@ -7,6 +7,12 @@
 @inject CatalogService Catalog
 @inject SetupStore Store
 
+@if (ShowSetup)
+{
+    <SetupForm />
+    return;
+}
+
 <PageTitle>ElForecast</PageTitle>
 
 @if (_setup is null)
@@ -19,7 +25,7 @@ else if (!_setup.IsComplete)
         <h1>Elprisprognose</h1>
         <p>Se din forventede elpris time for time cirka en uge frem – spotprisprognosen lagt sammen
            med dit netselskabs tariffer, afgifter og din elaftales tillæg.</p>
-        <a class="btn primary" href="opsaetning">Kom i gang – vælg dit netselskab</a>
+        <a class="btn primary" href="?vis=opsaetning">Kom i gang – vælg dit netselskab</a>
     </section>
 }
 else
@@ -30,7 +36,7 @@ else
             <p class="muted">
                 @(_supplierName ?? _setup.SupplierId)@(_priceArea is null ? "" : $" · {_priceArea}")
                 · @(_setup.CompanyName ?? "kun spotpris uden tillæg")
-                · <a href="opsaetning">skift</a>
+                · <a href="?vis=opsaetning">skift</a>
             </p>
         </div>
         <button class="btn" @onclick="LoadAsync" disabled="@_loading">@(_loading ? "Henter…" : "Opdater")</button>
@@ -97,7 +103,14 @@ else
 }
 
 @code {
+    // The setup lives on the same page behind "?vis=opsaetning" rather than on its own route,
+    // so a reload works on a plain static (FTP) host with no fallback to index.html.
+    [SupplyParameterFromQuery(Name = "vis")] public string? View { get; set; }
+
+    private bool ShowSetup => string.Equals(View, "opsaetning", StringComparison.OrdinalIgnoreCase);
+
     private ForecastSetup? _setup;
+    private string? _loadedFor;
     private PriceResult? _result;
     private string? _supplierName;
     private string? _priceArea;
@@ -105,11 +118,20 @@ else
     private bool _loading;
     private CancellationTokenSource? _cts;
 
-    protected override async Task OnInitializedAsync()
+    // Runs again when coming back from the setup, so a changed selection is fetched.
+    protected override async Task OnParametersSetAsync()
     {
+        if (ShowSetup)
+            return;
+
         _setup = await Store.LoadAsync();
-        if (_setup.IsComplete)
+        var key = $"{_setup.SupplierId}|{_setup.CustomerGroupId}|{_setup.ProductId}";
+        if (_setup.IsComplete && key != _loadedFor)
+        {
+            _loadedFor = key;
+            _result = null;
             await LoadAsync();
+        }
     }
 
     private async Task LoadAsync()
