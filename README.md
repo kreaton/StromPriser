@@ -1,12 +1,18 @@
 # StromPriser – know when electricity is cheap
 
+[![Live app](https://img.shields.io/badge/live%20app-open-2ea44f)](https://kreaton.github.io/StromPriser/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+![Blazor WebAssembly](https://img.shields.io/badge/Blazor-WebAssembly-lightgrey)
+![.NET 10](https://img.shields.io/badge/.NET-10-lightgrey)
+![Windows app](https://img.shields.io/badge/also-Windows%20app-lightgrey)
+
+![StromPriser: know when electricity is cheap](docs/banner.png)
+
 See what electricity really costs your household, hour by hour, and plan the washing machine,
 the dishwasher or the car charging for the cheap hours. Prices include everything on the bill,
 not just the spot price, and they reach about a week ahead.
 
 **Open ElForecast: <https://kreaton.github.io/StromPriser/>**
-
-![ElForecast showing a week of hourly prices as stacked bars, with details for one forecast hour](docs/elforecast.jpg)
 
 All prices come from the free public service at [stromligning.dk](https://stromligning.dk).
 The apps themselves are in Danish.
@@ -34,6 +40,8 @@ Press **Gem og vis prognose**. Your choices are remembered in this browser, so n
 the forecast opens straight away.
 
 **Reading the chart**
+
+![ElForecast showing a week of hourly prices as stacked bars, with details for one forecast hour](docs/elforecast.jpg)
 
 - Each bar is one hour. The taller the bar, the more that hour costs.
 - The colours show what the price is made of. Blue at the bottom is the market price, which
