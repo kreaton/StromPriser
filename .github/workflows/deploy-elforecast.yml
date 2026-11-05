@@ -1,4 +1,4 @@
-name: Build and Deploy ElForecast to FTP
+name: Build and Deploy ElForecast to FTP and GitHub Pages
 
 on:
   push:
@@ -56,3 +56,29 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_FOLDER }}/
           local-dir: ./release/wwwroot/
+
+  # Publishes to https://kreaton.github.io/StromPriser/ (Settings > Pages > Source: GitHub Actions).
+  deploy-pages:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download publish artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: publish-output
+          path: release
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: release/wwwroot
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

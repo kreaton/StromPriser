@@ -4,6 +4,8 @@ See what electricity really costs your household, hour by hour, and plan the was
 the dishwasher or the car charging for the cheap hours. Prices include everything on the bill,
 not just the spot price, and they reach about a week ahead.
 
+**Open ElForecast: <https://kreaton.github.io/StromPriser/>**
+
 ![ElForecast showing a week of hourly prices as stacked bars, with details for one forecast hour](docs/elforecast.jpg)
 
 All prices come from the free public service at [stromligning.dk](https://stromligning.dk).
