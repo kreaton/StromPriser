@@ -1,4 +1,5 @@
-# Renders the ElForecast icon in every size into ElForecast/wwwroot/icons:
+# Renders the ElForecast icon in every size into ElForecast/wwwroot/icons, and the same artwork as
+# the Windows app's StromPriser/app.ico:
 # stacked price bars (spot price + tariffs, like the chart) under a yellow lightning bolt on a blue tile.
 #   powershell -File tools\make-icons.ps1
 Add-Type -AssemblyName System.Drawing
@@ -94,26 +95,35 @@ Save-Png (New-Icon 512 0.64) "icon-512-maskable.png"
 # Browser tab.
 Save-Png (New-Icon 32 0.92 $true) "favicon-32.png"
 
-# favicon.ico with 16, 32 and 48 px PNG images, for Windows and older browsers.
-$images = foreach ($size in 16, 32, 48) {
-    $bmp = New-Icon $size 0.92 $true
-    $ms = New-Object System.IO.MemoryStream
-    $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
-    $bmp.Dispose()
-    [pscustomobject]@{ Size = $size; Bytes = $ms.ToArray() }
+# An .ico of PNG images in the given sizes (256 is stored as 0 in the directory, per the format).
+function Save-Ico([int[]]$sizes, [string]$path) {
+    $images = foreach ($size in $sizes) {
+        $bmp = New-Icon $size 0.92 $true
+        $ms = New-Object System.IO.MemoryStream
+        $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
+        $bmp.Dispose()
+        [pscustomobject]@{ Size = $size; Bytes = $ms.ToArray() }
+    }
+    $ico = New-Object System.IO.MemoryStream
+    $wr = New-Object System.IO.BinaryWriter $ico
+    $wr.Write([uint16]0); $wr.Write([uint16]1); $wr.Write([uint16]$images.Count)
+    $offset = 6 + 16 * $images.Count
+    foreach ($img in $images) {
+        $dim = if ($img.Size -ge 256) { 0 } else { $img.Size }
+        $wr.Write([byte]$dim); $wr.Write([byte]$dim); $wr.Write([byte]0); $wr.Write([byte]0)
+        $wr.Write([uint16]1); $wr.Write([uint16]32)
+        $wr.Write([uint32]$img.Bytes.Length); $wr.Write([uint32]$offset)
+        $offset += $img.Bytes.Length
+    }
+    foreach ($img in $images) { $wr.Write($img.Bytes) }
+    $wr.Flush()
+    [System.IO.File]::WriteAllBytes($path, $ico.ToArray())
 }
-$ico = New-Object System.IO.MemoryStream
-$wr = New-Object System.IO.BinaryWriter $ico
-$wr.Write([uint16]0); $wr.Write([uint16]1); $wr.Write([uint16]$images.Count)
-$offset = 6 + 16 * $images.Count
-foreach ($img in $images) {
-    $wr.Write([byte]$img.Size); $wr.Write([byte]$img.Size); $wr.Write([byte]0); $wr.Write([byte]0)
-    $wr.Write([uint16]1); $wr.Write([uint16]32)
-    $wr.Write([uint32]$img.Bytes.Length); $wr.Write([uint32]$offset)
-    $offset += $img.Bytes.Length
-}
-foreach ($img in $images) { $wr.Write($img.Bytes) }
-$wr.Flush()
-[System.IO.File]::WriteAllBytes((Join-Path $out "..\favicon.ico"), $ico.ToArray())
 
-Write-Host "Icons written to $out"
+# favicon.ico with 16, 32 and 48 px images, for Windows and older browsers.
+Save-Ico @(16, 32, 48) (Join-Path $out "..\favicon.ico")
+
+# The Windows app's icon: every size Explorer, the taskbar and Alt+Tab ask for.
+Save-Ico @(16, 20, 24, 32, 40, 48, 64, 128, 256) (Join-Path $PSScriptRoot "..\StromPriser\app.ico")
+
+Write-Host "Icons written to $out and StromPriser\app.ico"

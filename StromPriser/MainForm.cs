@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Net.Http;
 using Stromligning;
+using Velopack;
+using Velopack.Sources;
 
 namespace StromPriser;
 
@@ -45,6 +47,14 @@ public sealed class MainForm : Form
         Height = 30,
         Enabled = false
     };
+    private readonly Button _btnUpdate = new()
+    {
+        Text = "Søg efter opdatering",
+        Width = 160,
+        Height = 30
+    };
+    private const string RepoUrl = "https://github.com/kreaton/StromPriser";
+    private readonly UpdateManager _updates = new(new GithubSource(RepoUrl, accessToken: null, prerelease: false));
 
     // AutoSize is switched off on all of these: it defaults to true, which overrides the
     // docked height and silently swallows the second line of the context text.
@@ -109,12 +119,21 @@ public sealed class MainForm : Form
 
     public MainForm()
     {
-        Text = "Strømpriser - laveste pris de kommende 24 timer";
+        var version = typeof(MainForm).Assembly.GetName().Version;
+        Text = $"Strømpriser {version?.ToString(3)} - laveste pris de kommende 24 timer";
         Width = 1280;
         Height = 840;
         MinimumSize = new Size(1040, 680);
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 9F);
+        try
+        {
+            Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        }
+        catch
+        {
+            // Cosmetic only.
+        }
 
         _service = new PriceService(_client);
         BuildLayout();
@@ -127,6 +146,7 @@ public sealed class MainForm : Form
         _cmbCompany.SelectedIndexChanged += OnCompanyChanged;
         _btnFetch.Click += async (_, _) => await LoadPricesAsync();
         _btnSave.Click += async (_, _) => await SaveResultAsync();
+        _btnUpdate.Click += async (_, _) => await CheckForUpdateAsync();
         Load += async (_, _) => await LoadReferenceDataAsync();
         FormClosing += (_, _) => SaveSettings();
     }
@@ -174,6 +194,15 @@ public sealed class MainForm : Form
 
         table.Controls.Add(_chkHourly, 1, 2);
         table.Controls.Add(_chkForecast, 1, 3);
+        var updateButton = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.RightToLeft,
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            WrapContents = false
+        };
+        updateButton.Controls.Add(_btnUpdate);
+        table.Controls.Add(updateButton, 3, 2);
         // Right-to-left so "Hent priser" sits in the corner where it always was.
         var buttons = new FlowLayoutPanel
         {
@@ -195,6 +224,47 @@ public sealed class MainForm : Form
         };
         box.Controls.Add(table);
         return box;
+    }
+
+    /// <summary>Looks for a newer GitHub release and installs it (installed copies only).</summary>
+    private async Task CheckForUpdateAsync()
+    {
+        if (!_updates.IsInstalled)
+        {
+            MessageBox.Show(this, "Opdateringer virker kun i den installerede udgave (Setup.exe fra GitHub).",
+                "Opdatering", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        _btnUpdate.Enabled = false;
+        try
+        {
+            var update = await _updates.CheckForUpdatesAsync();
+            if (update is null)
+            {
+                MessageBox.Show(this, "Du har den nyeste udgave.", "Opdatering", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var answer = MessageBox.Show(this,
+                $"Version {update.TargetFullRelease.Version} er klar. Hent og installér den nu? StromPriser genstarter bagefter.",
+                "Opdatering", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (answer != DialogResult.Yes)
+                return;
+
+            SaveSettings();
+            await _updates.DownloadUpdatesAsync(update);
+            _updates.ApplyUpdatesAndRestart(update);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, $"Opdateringen mislykkedes.\n\n{ex.Message}", "Fejl",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+        finally
+        {
+            _btnUpdate.Enabled = true;
+        }
     }
 
     private Panel BuildSummaryPanel()

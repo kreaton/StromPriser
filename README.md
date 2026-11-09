@@ -74,6 +74,11 @@ Tick **Medtag prognose** to see about a week ahead, and **Vis pr. time** for one
 instead of every quarter of an hour. **Gem som fil...** saves what you see as a CSV file that
 opens directly in a Danish Excel, or as JSON. Your choices are remembered between runs.
 
+**Install:** download `StromPriser-win-Setup.exe` from the
+[latest release](https://github.com/kreaton/StromPriser/releases/latest) and run it. It installs
+the .NET 10 Desktop Runtime too if it is missing. **Søg efter opdatering** in the app fetches
+and installs newer versions.
+
 ## What makes up the price?
 
 | Part | What it is |
