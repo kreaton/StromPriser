@@ -35,6 +35,17 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.14" PrivateAssets="all" />
   </ItemGroup>
 
+  <!--
+    Give elforecast.js a content hash in its published file name (index.html refers to it as
+    elforecast#[.{fingerprint}].js), so a cached index.html never pairs with a newer script or the
+    other way round. The trailing "!" puts the hash in the file name, not only in the endpoint.
+    (The same trick for app.css renames the file but leaves the <link> unchanged, so it is not
+    used; elforecast.js refreshes app.css itself when it finds a new version.)
+  -->
+  <ItemGroup>
+    <StaticWebAssetFingerprintPattern Include="AppJs" Pattern="*.js" Expression="#[.{fingerprint}]!" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Stromligning\Stromligning.csproj" />
   </ItemGroup>
