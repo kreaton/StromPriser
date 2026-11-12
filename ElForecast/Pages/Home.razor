@@ -32,7 +32,11 @@ else
 {
     <div class="page-head">
         <div>
-            <h1>Elprisprognose</h1>
+            <h1>@Headline</h1>
+            @if (_result?.ForecastGeneratedAt is { } g)
+            {
+                <p class="muted">@($"Lavet {g.ToLocalTime():ddd d. MMM 'kl.' HH':'mm}")</p>
+            }
             <p class="muted">
                 @(_supplierName ?? _setup.SupplierId)@(_priceArea is null ? "" : $" · {_priceArea}")
                 · @(_setup.CompanyName ?? "kun spotpris uden tillæg")
@@ -47,7 +51,7 @@ else
         <div class="notice error" role="alert">Kunne ikke hente priserne: @_error</div>
     }
 
-    @if (_result is not null && _nearSummary is { } s)
+    @if (_result is not null)
     {
         @if (_result.ForecastError is { } fe)
         {
@@ -59,30 +63,25 @@ else
         </section>
 
         <div class="tiles">
-            <div class="tile">
-                <span class="tile-label">Billigste time · @NearLabel</span>
-                <span class="tile-value">@s.Cheapest.Total.Total.ToString("0.00") kr</span>
-                <span class="tile-sub">@When(s.Cheapest)</span>
-            </div>
-            <div class="tile">
-                <span class="tile-label">Dyreste time · @NearLabel</span>
-                <span class="tile-value">@s.Priciest.Total.Total.ToString("0.00") kr</span>
-                <span class="tile-sub">@When(s.Priciest)</span>
-            </div>
-            <div class="tile">
-                <span class="tile-label">Prognose</span>
-                <span class="tile-value">@ForecastDays(_result.ForecastCount)</span>
-                <span class="tile-sub">
-                    @if (_result.ForecastGeneratedAt is { } g)
+            @foreach (var w in _windows)
+            {
+                <div class="tile">
+                    <span class="tile-label">Billigste 2 timer · @w.Label</span>
+                    @if (w.Start is { } start)
                     {
-                        @($"lavet {g.ToLocalTime():ddd d. MMM 'kl.' HH':'mm}")
+                        <span class="tile-value">@w.Average.ToString("0.00") kr</span>
+                        <span class="tile-sub">
+                            kl. @start.ToString("HH':'mm")–@start.AddHours(WindowHours).ToString("HH':'mm")
+                            · @StartsIn(start)@(w.IsForecast ? " (prognose)" : "")
+                        </span>
                     }
                     else
                     {
-                        @("ingen prognose")
+                        <span class="tile-value">–</span>
+                        <span class="tile-sub">ingen priser</span>
                     }
-                </span>
-            </div>
+                </div>
+            }
         </div>
 
         <p class="muted small">
@@ -108,12 +107,15 @@ else
     private string? _loadedFor;
     private PriceResult? _result;
 
-    // Cheapest and priciest are picked from today and the next two days only: further out the
-    // forecast is too uncertain to plan by.
+    // The chart highlights today and the next two days: further out the forecast is too
+    // uncertain to plan by.
     private const int NearDays = 3;
-    private const string NearLabel = "3 dage";
     private DateTime _nearUntil;
-    private PriceSummary? _nearSummary;
+
+    // Cheapest consecutive block of this many hours within each window.
+    private const int WindowHours = 2;
+    private sealed record CheapWindow(string Label, DateTime? Start, double Average, bool IsForecast);
+    private List<CheapWindow> _windows = new();
     private string? _supplierName;
     private string? _priceArea;
     private string? _error;
@@ -157,7 +159,7 @@ else
             _result = await Prices.GetPricesAsync(query, ct);
             _priceArea = _result.PriceArea;
             _nearUntil = DateTime.Today.AddDays(NearDays);
-            _nearSummary = PriceSummary.From(_result.Rows.Where(r => r.Start < _nearUntil).ToList());
+            _windows = BuildWindows(_result.Rows, DateTime.Now);
 
             try
             {
@@ -183,12 +185,63 @@ else
         }
     }
 
-    private static string When(PriceRow row) => row.Start.ToString("ddd d. MMM 'kl.' HH':'mm") + (row.IsForecast ? " (prognose)" : "");
-
-    private static string ForecastDays(int hours)
+    // "Elprisprognose til 2026-11-19 (7 dage)" – the last day with a price, and how far the
+    // forecast reaches.
+    private string Headline
     {
-        var days = (int)Math.Round(hours / 24.0);
-        return days == 1 ? "1 dag" : $"{days} dage";
+        get
+        {
+            if (_result is not { Rows.Count: > 0 } r)
+                return "Elprisprognose";
+            var last = r.Rows[^1].Start.ToString("yyyy-MM-dd");
+            var days = (int)Math.Round(r.ForecastCount / 24.0);
+            return days > 0
+                ? $"Elprisprognose til {last} ({(days == 1 ? "1 dag" : $"{days} dage")})"
+                : $"Elprisprognose til {last}";
+        }
+    }
+
+    // Now until midnight, then tomorrow night and tomorrow daytime.
+    private static List<CheapWindow> BuildWindows(IReadOnlyList<PriceRow> rows, DateTime now)
+    {
+        var tomorrow = now.Date.AddDays(1);
+        return new List<CheapWindow>
+        {
+            Cheapest("nu–00:00", rows, now, tomorrow),
+            Cheapest("i nat 00–06", rows, tomorrow, tomorrow.AddHours(6)),
+            Cheapest("i morgen 06–18", rows, tomorrow.AddHours(6), tomorrow.AddHours(18))
+        };
+    }
+
+    // Cheapest run of WindowHours consecutive hourly rows lying within [from, to). The hour
+    // already under way counts, so a block can start "nu".
+    private static CheapWindow Cheapest(string label, IReadOnlyList<PriceRow> rows, DateTime from, DateTime to)
+    {
+        var inRange = rows.Where(r => r.End > from && r.End <= to).OrderBy(r => r.Start).ToList();
+        CheapWindow best = new(label, null, 0, false);
+
+        for (var i = 0; i + WindowHours <= inRange.Count; i++)
+        {
+            var block = inRange.GetRange(i, WindowHours);
+            var contiguous = block.Zip(block.Skip(1)).All(p => p.First.End == p.Second.Start);
+            if (!contiguous)
+                continue;
+
+            var avg = block.Average(r => r.Total.Total);
+            if (best.Start is null || avg < best.Average)
+                best = new(label, block[0].Start, avg, block.Any(r => r.IsForecast));
+        }
+
+        return best;
+    }
+
+    private static string StartsIn(DateTime start)
+    {
+        var wait = start - DateTime.Now;
+        if (wait <= TimeSpan.Zero)
+            return "i gang nu";
+        var hours = (int)wait.TotalHours;
+        return hours == 0 ? $"om {wait.Minutes} min" : $"om {hours} t {wait.Minutes} min";
     }
 
     public void Dispose() => _cts?.Cancel();

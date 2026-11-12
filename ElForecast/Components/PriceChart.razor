@@ -1,11 +1,11 @@
 @using Stromligning
 
 @* Stacked bars, one per hour: each bar is split into the price components, with the spot
-   price at the bottom because that is the part that moves. Gridlines every 0.5 kr. The plot
+   price at the bottom (it can go below zero) and the distribution tariff on top. Gridlines every 0.5 kr. The plot
    scrolls sideways when the hours do not fit; the price axis stays put on the left. *@
 
 <div class="legend" aria-label="Forklaring">
-    @for (var i = 0; i < Parts.Length; i++)
+    @for (var i = Parts.Length - 1; i >= 0; i--)
     {
         <span class="legend-item"><span class="swatch @Parts[i].Css"></span>@Parts[i].Label</span>
     }
@@ -160,14 +160,15 @@
 
     private sealed record Part(string Label, string Css, Func<PriceRow, Money> Get);
 
+    // Stacking order, bottom first.
     private static readonly Part[] Parts =
     [
         new("Spotpris", "s1", r => r.Electricity),
         new("Tillæg", "s2", r => r.Surcharge),
         new("Nettarif", "s3", r => r.NetTariff),
         new("Systemtarif", "s4", r => r.SystemTariff),
-        new("Distribution", "s5", r => r.Distribution),
-        new("Elafgift", "s6", r => r.ElectricityTax)
+        new("Elafgift", "s6", r => r.ElectricityTax),
+        new("Distribution", "s5", r => r.Distribution)
     ];
 
     private sealed record Segment(int Part, double Top, double Height, bool IsTop);
