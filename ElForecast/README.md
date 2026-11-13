@@ -20,17 +20,9 @@ Then open <http://localhost:5276>.
 ## Deployment
 
 [`.github/workflows/deploy-elforecast.yml`](../.github/workflows/deploy-elforecast.yml)
-publishes the app to [GitHub Pages](https://kreaton.github.io/StromPriser/) and uploads `wwwroot/`
-by FTP. It runs on every push to `main` that touches `ElForecast/`, `Stromligning/` or the workflow
-itself, and can also be started by hand from the Actions tab. After the first run only changed
-files are uploaded by FTP. The FTP upload uses these repository secrets:
-
-| Secret         | Example |
-|----------------|---------|
-| `FTP_HOST`     | `ftp.example.com` |
-| `FTP_USERNAME` | |
-| `FTP_PASSWORD` | |
-| `FTP_FOLDER`   | `webroots/www/elforecast` (no trailing `/`) |
+publishes the app to [GitHub Pages](https://kreaton.github.io/StromPriser/). It runs on every push
+to `main` that touches `ElForecast/`, `Stromligning/` or the workflow itself, and can also be
+started by hand from the Actions tab.
 
 The output is plain static files, so it can be hosted anywhere:
 

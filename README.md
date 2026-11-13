@@ -111,7 +111,7 @@ The repository holds three .NET 10 projects. Each has its own README with the te
 | Project | |
 |---|---|
 | [Stromligning](Stromligning/README.md) | Class library for the stromligning.dk API: prices with the full breakdown, the forecast, CSV/JSON export. Has no UI, so it can be reused anywhere. |
-| [ElForecast](ElForecast/README.md) | The Blazor WebAssembly app. It is deployed by FTP from GitHub Actions on every push to `main`. |
+| [ElForecast](ElForecast/README.md) | The Blazor WebAssembly app. It is deployed to GitHub Pages from GitHub Actions on every push to `main`. |
 | [StromPriser](StromPriser/README.md) | The Windows Forms app. |
 
 ```bash
