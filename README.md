@@ -119,6 +119,10 @@ dotnet run --project ElForecast     # http://localhost:5276
 dotnet run --project StromPriser    # Windows only
 ```
 
-## License
+## License & Authorship
 
-[MIT](LICENSE) © 2026 Per Hejndorf. Price data from [stromligning.dk](https://stromligning.dk).
+This project is distributed under the terms of the [MIT License](LICENSE).
+
+Price data from [stromligning.dk](https://stromligning.dk).
+
+**AI authorship note:** Most of the source code in this repository was generated with AI coding agents (Claude Code), under my direction and review. Purely AI-generated material may not be eligible for copyright protection in some jurisdictions. To the extent any part of this project is protected by copyright, it is licensed under the MIT License, and the license's warranty and liability disclaimers apply to the project as a whole.
