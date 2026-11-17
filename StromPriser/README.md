@@ -27,7 +27,7 @@ for win-x64, packs it with [Velopack](https://velopack.io) and uploads a GitHub 
 - **Version**: `Major.Minor` is `MajorMinor` in `StromPriser.csproj`; the patch is one higher
   than the latest release with that `Major.Minor`. Local builds are `x.y.0`.
 - **Locally**: `.\tools\BuildRelease.ps1 -LocalOnly` builds and packs into `.\Releases`
-  without uploading (needs `dotnet tool install -g vpk --version 1.2.161`).
+  without uploading (needs `dotnet tool install -g vpk --version 1.3.39-g8d2844f`).
 - **Updating**: *Søg efter opdatering* checks the GitHub releases and installs a newer version,
   then restarts. It only works in a copy installed with Setup.exe.
 - **Icon**: `app.ico` is drawn by `tools/make-icons.ps1`, the same artwork as ElForecast.
