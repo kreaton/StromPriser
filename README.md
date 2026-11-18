@@ -5,6 +5,9 @@
 ![Blazor WebAssembly](https://img.shields.io/badge/Blazor-WebAssembly-lightgrey)
 ![.NET 10](https://img.shields.io/badge/.NET-10-lightgrey)
 ![Windows app](https://img.shields.io/badge/also-Windows%20app-lightgrey)
+[![GitHub stars](https://img.shields.io/github/stars/kreaton/StromPriser?style=flat&logo=github&color=yellow)](https://github.com/kreaton/StromPriser/stargazers)
+
+⭐ If StromPriser earns a place on your machine, [star it on GitHub](https://github.com/kreaton/StromPriser) — it's free, made by one developer, and stars are how other people find it.
 
 ![StromPriser: know when electricity is cheap](docs/banner.png)
 
