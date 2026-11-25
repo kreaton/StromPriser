@@ -151,6 +151,8 @@ main { flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 24px; }
     border-top: 3px solid color-mix(in srgb, var(--ink) 70%, transparent); transform: translateY(-1.5px);
 }
 .grid.zero { border-top-color: var(--ink); }
+/* The in-between lines (0.5, 1.5, …) are thinner, so whole kroner stand out. */
+.grid.half { border-top-width: 2px; transform: translateY(-1px); }
 .day-line { position: absolute; top: var(--plot-top); bottom: 0; border-left: 1px solid var(--axis); }
 .forecast-line { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--muted); }
 .forecast-label { position: absolute; top: 2px; font-size: .75rem; color: var(--ink-2); white-space: nowrap; }

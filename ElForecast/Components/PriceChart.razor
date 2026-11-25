@@ -28,7 +28,7 @@
         <div class="plot" style="width:@Px(Width)" @onmouseleave="ClearHover">
             @foreach (var v in _ticks)
             {
-                <div class="grid @(v == 0 ? "zero" : null)" style="top:@Px(Y(v))"></div>
+                <div class="grid @(v == 0 ? "zero" : null) @(Math.Abs(v % 1) > 0.01 ? "half" : null)" style="top:@Px(Y(v))"></div>
             }
 
             @foreach (var i in _midnights)
