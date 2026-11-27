@@ -1,9 +1,9 @@
-# ElForecast
+# El Forecast
 
 A Blazor WebAssembly app (.NET 10) that shows Danish household electricity prices hour by
 hour for about a week ahead. It uses published prices where they exist and the
 stromligning.dk spot price forecast for the rest. The UI is in Danish; how to use it is
-described in the [main README](../README.md#elforecast-the-week-ahead-in-the-browser).
+described in the [main README](../README.md#el-forecast-the-week-ahead-in-the-browser).
 
 It is built on the [`Stromligning`](../Stromligning/README.md) library, the same library the
 StromPriser WinForms app uses. The library runs unchanged in the browser: the API sends

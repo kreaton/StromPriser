@@ -15,20 +15,20 @@ See what electricity really costs your household, hour by hour, and plan the was
 the dishwasher or the car charging for the cheap hours. Prices include everything on the bill,
 not just the spot price, and they reach about a week ahead.
 
-**Open ElForecast: <https://kreaton.github.io/StromPriser/>**
+**Open El Forecast: <https://kreaton.github.io/StromPriser/>**
 
 All prices come from the free public service at [stromligning.dk](https://stromligning.dk).
 The apps themselves are in Danish.
 
 ## Two ways to use it
 
-| | **ElForecast** – in the browser | **StromPriser** – on Windows |
+| | **El Forecast** – in the browser | **StromPriser** – on Windows |
 |---|---|---|
 | Best for | A quick look at the week ahead, on your phone or computer | Detailed numbers, and saving them to Excel |
 | Shows | A bar chart of every hour for about 8 days | Tables of every period, with the cheapest one highlighted |
 | Install | Nothing, just open the page. It can also be added to your home screen. | A small Windows program |
 
-## ElForecast: the week ahead in the browser
+## El Forecast: the week ahead in the browser
 
 **First time:** choose **Opsætning** and pick:
 
@@ -44,7 +44,7 @@ the forecast opens straight away.
 
 **Reading the chart**
 
-![ElForecast showing a week of hourly prices as stacked bars, with details for one forecast hour](docs/elforecast.jpg)
+![El Forecast showing a week of hourly prices as stacked bars, with details for one forecast hour](docs/elforecast.jpg)
 
 - Each bar is one hour. The taller the bar, the more that hour costs.
 - The colours show what the price is made of. Blue at the bottom is the market price, which
@@ -64,7 +64,7 @@ fresh numbers.
 
 ## StromPriser: the Windows app
 
-Pick your companies in the four drop-downs, just like in ElForecast, and press
+Pick your companies in the four drop-downs, just like in El Forecast, and press
 **Hent priser**. You get:
 
 - a summary with the cheapest and the most expensive period and how much you save by moving

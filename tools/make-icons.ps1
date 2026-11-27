@@ -1,4 +1,4 @@
-# Renders the ElForecast icon in every size into ElForecast/wwwroot/icons, and the same artwork as
+# Renders the El Forecast icon in every size into ElForecast/wwwroot/icons, and the same artwork as
 # the Windows app's StromPriser/app.ico:
 # stacked price bars (spot price + tariffs, like the chart) under a yellow lightning bolt on a blue tile.
 #   powershell -File tools\make-icons.ps1

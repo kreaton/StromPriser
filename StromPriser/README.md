@@ -30,7 +30,7 @@ for win-x64, packs it with [Velopack](https://velopack.io) and uploads a GitHub 
   without uploading (needs `dotnet tool install -g vpk --version 1.3.39-g8d2844f`).
 - **Updating**: *Søg efter opdatering* checks the GitHub releases and installs a newer version,
   then restarts. It only works in a copy installed with Setup.exe.
-- **Icon**: `app.ico` is drawn by `tools/make-icons.ps1`, the same artwork as ElForecast.
+- **Icon**: `app.ico` is drawn by `tools/make-icons.ps1`, the same artwork as El Forecast.
 
 ## Controls
 

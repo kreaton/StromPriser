@@ -1,4 +1,4 @@
-name: Build and Deploy ElForecast to GitHub Pages
+name: Build and Deploy El Forecast to GitHub Pages
 
 on:
   push:
