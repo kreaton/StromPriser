@@ -1,20 +1,20 @@
-# StromPriser – know when electricity is cheap
+# El Forecast – know when electricity is cheap
 
-[![Live app](https://img.shields.io/badge/live%20app-open-2ea44f)](https://kreaton.github.io/StromPriser/)
+[![Live app](https://img.shields.io/badge/live%20app-open-2ea44f)](https://kreaton.github.io/ElForecast/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 ![Blazor WebAssembly](https://img.shields.io/badge/Blazor-WebAssembly-lightgrey)
 ![.NET 10](https://img.shields.io/badge/.NET-10-lightgrey)
-[![GitHub stars](https://img.shields.io/github/stars/kreaton/StromPriser?style=flat&logo=github&color=yellow)](https://github.com/kreaton/StromPriser/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/kreaton/ElForecast?style=flat&logo=github&color=yellow)](https://github.com/kreaton/ElForecast/stargazers)
 
-⭐ If StromPriser earns a place on your machine, [star it on GitHub](https://github.com/kreaton/StromPriser) — it's free, made by one developer, and stars are how other people find it.
+⭐ If El Forecast earns a place on your machine, [star it on GitHub](https://github.com/kreaton/ElForecast) — it's free, made by one developer, and stars are how other people find it.
 
-![StromPriser: know when electricity is cheap](docs/banner.png)
+![El Forecast: know when electricity is cheap](docs/banner.png)
 
 See what electricity really costs your household, hour by hour, and plan the washing machine,
 the dishwasher or the car charging for the cheap hours. Prices include everything on the bill,
 not just the spot price, and they reach about a week ahead.
 
-**Open El Forecast: <https://kreaton.github.io/StromPriser/>**
+**Open El Forecast: <https://kreaton.github.io/ElForecast/>**
 
 All prices come from the free public service at [stromligning.dk](https://stromligning.dk).
 The app itself is in Danish. There is nothing to install: just open the page, on your phone
@@ -103,7 +103,7 @@ Price data from [stromligning.dk](https://stromligning.dk).
 <!-- notices:start -->
 ### Independent development
 
-StromPriser is an independent, personal project developed by Per Hejndorf. It is not affiliated with, endorsed by or sponsored by Microsoft or any other rights holder (including Strømligning). Product names and logos are trademarks of their respective owners and are used only to identify the services and tools the project works with.
+El Forecast is an independent, personal project developed by Per Hejndorf. It is not affiliated with, endorsed by or sponsored by Microsoft or any other rights holder (including Strømligning). Product names and logos are trademarks of their respective owners and are used only to identify the services and tools the project works with.
 
 ### Third-party notices and asset provenance
 

@@ -20,7 +20,7 @@ Then open <http://localhost:5276>.
 ## Deployment
 
 [`.github/workflows/deploy-elforecast.yml`](../.github/workflows/deploy-elforecast.yml)
-publishes the app to [GitHub Pages](https://kreaton.github.io/StromPriser/). It runs on every push
+publishes the app to [GitHub Pages](https://kreaton.github.io/ElForecast/). It runs on every push
 to `main` that touches `ElForecast/`, `Stromligning/` or the workflow itself, and can also be
 started by hand from the Actions tab.
 

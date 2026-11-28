@@ -35,7 +35,7 @@ jobs:
           name: publish-output
           path: release
 
-  # Publishes to https://kreaton.github.io/StromPriser/ (Settings > Pages > Source: GitHub Actions).
+  # Publishes to https://kreaton.github.io/ElForecast/ (Settings > Pages > Source: GitHub Actions).
   deploy-pages:
     needs: build
     runs-on: ubuntu-latest
