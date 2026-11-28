@@ -1,5 +1,4 @@
-# Renders the El Forecast icon in every size into ElForecast/wwwroot/icons, and the same artwork as
-# the Windows app's StromPriser/app.ico:
+# Renders the El Forecast icon in every size into ElForecast/wwwroot/icons:
 # stacked price bars (spot price + tariffs, like the chart) under a yellow lightning bolt on a blue tile.
 #   powershell -File tools\make-icons.ps1
 Add-Type -AssemblyName System.Drawing
@@ -123,7 +122,4 @@ function Save-Ico([int[]]$sizes, [string]$path) {
 # favicon.ico with 16, 32 and 48 px images, for Windows and older browsers.
 Save-Ico @(16, 32, 48) (Join-Path $out "..\favicon.ico")
 
-# The Windows app's icon: every size Explorer, the taskbar and Alt+Tab ask for.
-Save-Ico @(16, 20, 24, 32, 40, 48, 64, 128, 256) (Join-Path $PSScriptRoot "..\StromPriser\app.ico")
-
-Write-Host "Icons written to $out and StromPriser\app.ico"
+Write-Host "Icons written to $out"

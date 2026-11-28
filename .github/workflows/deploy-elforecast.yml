@@ -3,7 +3,7 @@ name: Build and Deploy El Forecast to GitHub Pages
 on:
   push:
     branches: [ "main" ]
-    # Only the web app and what it is built from; changes to the WinForms app don't redeploy.
+    # Only the web app and what it is built from; changes to docs or tools don't redeploy.
     paths:
       - "ElForecast/**"
       - "Stromligning/**"

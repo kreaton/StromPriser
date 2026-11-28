@@ -1,5 +1,4 @@
 <Solution>
   <Project Path="ElForecast/ElForecast.csproj" />
   <Project Path="Stromligning/Stromligning.csproj" />
-  <Project Path="StromPriser/StromPriser.csproj" />
 </Solution>

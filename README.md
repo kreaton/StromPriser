@@ -4,7 +4,6 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 ![Blazor WebAssembly](https://img.shields.io/badge/Blazor-WebAssembly-lightgrey)
 ![.NET 10](https://img.shields.io/badge/.NET-10-lightgrey)
-![Windows app](https://img.shields.io/badge/also-Windows%20app-lightgrey)
 [![GitHub stars](https://img.shields.io/github/stars/kreaton/StromPriser?style=flat&logo=github&color=yellow)](https://github.com/kreaton/StromPriser/stargazers)
 
 ⭐ If StromPriser earns a place on your machine, [star it on GitHub](https://github.com/kreaton/StromPriser) — it's free, made by one developer, and stars are how other people find it.
@@ -18,15 +17,8 @@ not just the spot price, and they reach about a week ahead.
 **Open El Forecast: <https://kreaton.github.io/StromPriser/>**
 
 All prices come from the free public service at [stromligning.dk](https://stromligning.dk).
-The apps themselves are in Danish.
-
-## Two ways to use it
-
-| | **El Forecast** – in the browser | **StromPriser** – on Windows |
-|---|---|---|
-| Best for | A quick look at the week ahead, on your phone or computer | Detailed numbers, and saving them to Excel |
-| Shows | A bar chart of every hour for about 8 days | Tables of every period, with the cheapest one highlighted |
-| Install | Nothing, just open the page. It can also be added to your home screen. | A small Windows program |
+The app itself is in Danish. There is nothing to install: just open the page, on your phone
+or computer. It can also be added to your home screen.
 
 ## El Forecast: the week ahead in the browser
 
@@ -62,26 +54,6 @@ The boxes below the chart show the cheapest and the most expensive hour in the s
 and how many days the forecast covers and when it was last updated. Press **Opdater** for
 fresh numbers.
 
-## StromPriser: the Windows app
-
-Pick your companies in the four drop-downs, just like in El Forecast, and press
-**Hent priser**. You get:
-
-- a summary with the cheapest and the most expensive period and how much you save by moving
-  your consumption,
-- what the cheapest period's price is made of,
-- a table of every period for the next 24 hours, with the cheapest row in green and the most
-  expensive in red.
-
-Tick **Medtag prognose** to see about a week ahead, and **Vis pr. time** for one row per hour
-instead of every quarter of an hour. **Gem som fil...** saves what you see as a CSV file that
-opens directly in a Danish Excel, or as JSON. Your choices are remembered between runs.
-
-**Install:** download `StromPriser-win-Setup.exe` from the
-[latest release](https://github.com/kreaton/StromPriser/releases/latest) and run it. It installs
-the .NET 10 Desktop Runtime too if it is missing. **Søg efter opdatering** in the app fetches
-and installs newer versions.
-
 ## What makes up the price?
 
 | Part | What it is |
@@ -109,17 +81,15 @@ relying on a single hour.
 
 ## For developers
 
-The repository holds three .NET 10 projects. Each has its own README with the technical details:
+The repository holds two .NET 10 projects. Each has its own README with the technical details:
 
 | Project | |
 |---|---|
 | [Stromligning](Stromligning/README.md) | Class library for the stromligning.dk API: prices with the full breakdown, the forecast, CSV/JSON export. Has no UI, so it can be reused anywhere. |
 | [ElForecast](ElForecast/README.md) | The Blazor WebAssembly app. It is deployed to GitHub Pages from GitHub Actions on every push to `main`. |
-| [StromPriser](StromPriser/README.md) | The Windows Forms app. |
 
 ```bash
 dotnet run --project ElForecast     # http://localhost:5276
-dotnet run --project StromPriser    # Windows only
 ```
 
 ## License & Authorship
